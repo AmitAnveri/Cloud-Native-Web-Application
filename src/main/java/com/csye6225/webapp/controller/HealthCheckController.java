@@ -20,7 +20,7 @@ public class HealthCheckController {
     public ResponseEntity<Void> healthCheck(HttpServletRequest request) {
 
         //check if request has payload
-        if (request.getContentLength() > 0) {
+        if (request.getContentLength() > 0 || request.getQueryString() != null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
