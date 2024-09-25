@@ -19,6 +19,7 @@ public class HealthCheckController {
     @GetMapping
     public ResponseEntity<Void> healthCheck(HttpServletRequest request) {
 
+        //check if request has payload
         if (request.getContentLength() > 0) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
