@@ -70,3 +70,4 @@ curl http://localhost:8080/healthz
 The response should be:
 - **200 OK** if the database connection is successful.
 - **503 Service Unavailable** if the database connection fails.
+- **400 Bad Request** if the request method is not supported like PUT,POST,etc.
