@@ -2,7 +2,9 @@ package com.csye6225.webapp.service;
 
 import com.csye6225.webapp.dto.UserRequestDto;
 import com.csye6225.webapp.dto.UserResponseDto;
+import com.csye6225.webapp.dto.UserUpdateRequestDto;
 import com.csye6225.webapp.exception.UserAlreadyExistsException;
+import com.csye6225.webapp.exception.UserNotFoundException;
 import com.csye6225.webapp.model.User;
 import com.csye6225.webapp.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,11 @@ public class UserService {
         return mapToUserResponseDto(user);
     }
 
+    public UserResponseDto getUserByEmail(String email) {
+        User user = userRepository.findByEmail(email);
+        return mapToUserResponseDto(user);
+    }
+
     private UserResponseDto mapToUserResponseDto(User user) {
         UserResponseDto userResponseDto = new UserResponseDto();
         userResponseDto.setId(user.getId());
@@ -48,5 +55,13 @@ public class UserService {
         userResponseDto.setAccountUpdated(user.getAccountUpdated().toString());
 
         return userResponseDto;
+    }
+
+    public void updateUser(String email, UserUpdateRequestDto userUpdateRequestDto) {
+        User user = userRepository.findByEmail(email);
+        user.setFirstName(userUpdateRequestDto.getFirstName());
+        user.setLastName(userUpdateRequestDto.getLastName());
+        user.setPassword(passwordEncoder.encode(userUpdateRequestDto.getPassword()));
+        userRepository.save(user);
     }
 }
