@@ -41,6 +41,10 @@ public class UserController {
     public ResponseEntity<?> updateUser(@Valid @RequestBody UserUpdateRequestDto userUpdateRequestDto) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String userEmail = userDetails.getUsername();
+
+        if (!userEmail.equals(userUpdateRequestDto.getEmail())) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
         userService.updateUser(userEmail, userUpdateRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
