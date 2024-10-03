@@ -4,7 +4,6 @@ import com.csye6225.webapp.dto.UserRequestDto;
 import com.csye6225.webapp.dto.UserResponseDto;
 import com.csye6225.webapp.dto.UserUpdateRequestDto;
 import com.csye6225.webapp.exception.UserAlreadyExistsException;
-import com.csye6225.webapp.exception.UserNotFoundException;
 import com.csye6225.webapp.model.User;
 import com.csye6225.webapp.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
