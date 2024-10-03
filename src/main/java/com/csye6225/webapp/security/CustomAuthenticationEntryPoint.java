@@ -7,13 +7,11 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) {
         Throwable cause = authException.getCause();
         response.setContentType("application/json");
         if (cause instanceof DatabaseAuthenticationException) {
@@ -22,7 +20,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         } else {
             // Handle normal authentication failure (invalid username/password)
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"message\": \"Invalid email or password\"}");
         }
     }
 }
