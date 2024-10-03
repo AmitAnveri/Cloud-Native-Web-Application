@@ -45,4 +45,19 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @RequestMapping(value = "/self", method = RequestMethod.HEAD)
+    public ResponseEntity<?> handleHead() {
+        return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
+    }
+
+    @RequestMapping(value = "/self", method = RequestMethod.OPTIONS)
+    public ResponseEntity<?> handleOptions() {
+        return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
+    }
+
+    @RequestMapping(method = RequestMethod.OPTIONS)
+    public ResponseEntity<?> handleOptionsBase() {
+        return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
+    }
+
 }
