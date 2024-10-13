@@ -11,7 +11,7 @@ Install the following on your machine:
 - PostgreSQL
 - Git
 
-##  Build and Deploy Instructions (Local)
+## Build and Deploy Instructions (Local)
 
 Follow these steps to build and run the application locally.
 
