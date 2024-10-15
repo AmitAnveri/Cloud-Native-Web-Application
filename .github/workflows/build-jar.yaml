@@ -58,7 +58,7 @@ jobs:
       - name: Initialize Packer in packer directory
         run: |
           cd packer/
-          packer init .
+          packer init main.pkr.hcl
       - name: Deploy AMI with Packer
         run: >
           cd packer/
