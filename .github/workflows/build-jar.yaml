@@ -55,11 +55,15 @@ jobs:
           sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
 
           sudo apt-get update && sudo apt-get install packer
+      - name: Initialize Packer in packer directory
+        run: |
+          cd packer/
+          packer init .
       - name: Deploy AMI with Packer
         run: >
-          packer build -var 'artifact_url=https://github.com/${{ github.repository
-          }}/actions/artifacts/${{ steps.download.outputs.artifact-path
-          }}/webapp-jar' \
+          cd packer/
+
+          packer build -var 'artifact_url=https://github.com/CSYE6225-Amit-Anveri/webapp/actions/artifacts//webapp-jar' \
 
           -var 'db_name=${{ secrets.DB_NAME }}' \
 
@@ -67,4 +71,4 @@ jobs:
 
           -var 'db_password=${{ secrets.DB_PASSWORD }}' \
 
-          packer/main.pkr.hcl
+          main.pkr.hcl

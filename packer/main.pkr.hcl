@@ -18,6 +18,25 @@ variable "db_password" {
   type        = string
 }
 
+variable "ami_name_prefix" {
+  description = "Prefix for the AMI name"
+  type        = string
+  default     = "webapp-ami"
+}
+
+variable "instance_type" {
+  description = "ec2 instance type"
+  type        = string
+  default     = "t2.micro"
+}
+
+variable "region" {
+  description = "AMI build region"
+  type        = string
+  default     = "us-east-1"
+}
+
+
 locals {
   ami_name = "${var.ami_name_prefix}-${formatdate("YYYYMMDD-HHmm", timestamp())}"
 }
