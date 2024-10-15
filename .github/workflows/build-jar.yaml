@@ -67,4 +67,4 @@ jobs:
 
           -var 'db_password=${{ secrets.DB_PASSWORD }}' \
 
-          main.pkr.hcl
+          packer/main.pkr.hcl
