@@ -7,8 +7,8 @@ packer {
   }
 }
 
-variable "artifact_url" {
-  description = "URL where the JAR file is stored"
+variable "artifact_path" {
+  description = "The path to the application artifact JAR file"
   type        = string
 }
 
@@ -42,6 +42,7 @@ locals {
   ami_name = "${var.ami_name_prefix}-${formatdate("YYYYMMDD-HHmm", timestamp())}"
 }
 
+# Configure the EC2 instance
 source "amazon-ebs" "ubuntu" {
   instance_type = var.instance_type
   ami_name      = local.ami_name
@@ -52,7 +53,7 @@ source "amazon-ebs" "ubuntu" {
 build {
   sources = ["source.amazon-ebs.ubuntu"]
 
-  # 1. Install Java 17, PostgreSQL, and other dependencies
+  # 1. Install Java 17, PostgreSQL
   provisioner "shell" {
     inline = [
       "sudo apt-get update",
@@ -84,10 +85,14 @@ build {
     ]
   }
 
-  # 4. Move it to /opt/myapp
+  # 4. Copy the JAR from the local file to the instance
+  provisioner "file" {
+    source = var.artifact_path
+    destination = "/opt/myapp/webapp.jar"
+  }
+
   provisioner "shell" {
     inline = [
-      "sudo curl -L -o /opt/myapp/webapp.jar ${var.artifact_url}",
       "sudo chown csye6225:csye6225 /opt/myapp/webapp.jar"
     ]
   }
