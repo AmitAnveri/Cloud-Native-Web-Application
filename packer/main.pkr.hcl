@@ -33,12 +33,17 @@ variable "ami_name_prefix" {
   default     = "webapp-ami"
 }
 
+variable "instance_type" {
+  description = "EC2 instance type"
+  type        = string
+}
+
 locals {
   ami_name = "${var.ami_name_prefix}-${formatdate("YYYYMMDD-HHmm", timestamp())}"
 }
 
 source "amazon-ebs" "ubuntu" {
-  instance_type = "${env("INSTANCE_TYPE")}"
+  instance_type = var.instance_type
   ami_name      = local.ami_name
   ssh_username  = "ubuntu"
   source_ami    = "ami-0866a3c8686eaeeba"
