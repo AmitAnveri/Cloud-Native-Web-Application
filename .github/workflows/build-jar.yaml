@@ -75,6 +75,6 @@ jobs:
 
           -var 'db_password=${{ secrets.DB_PASSWORD }}' \
 
-          -var 'instance_type=${{ env.INSTANCE_TYPE }}' \
+          -var 'instance_type=${{ secrets.INSTANCE_TYPE }}' \
 
           main.pkr.hcl
