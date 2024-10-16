@@ -65,8 +65,9 @@ jobs:
           packer init main.pkr.hcl
       - name: Deploy AMI with Packer
         run: >
-          cd packer/ packer build -var
-          "artifact_path=../webapp-jar/webapp-0.0.1-SNAPSHOT.jar" \
+          cd packer
+
+          packer build -var "artifact_path=../webapp-jar/webapp-0.0.1-SNAPSHOT.jar" \
                        -var 'db_name=${{ secrets.DB_NAME }}' \
                        -var 'db_username=${{ secrets.DB_USERNAME }}' \
                        -var 'db_password=${{ secrets.DB_PASSWORD }}' \
