@@ -50,6 +50,8 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Set instance type
         run: echo "INSTANCE_TYPE=${{ env.INSTANCE_TYPE }}" >> $GITHUB_ENV
+      - name: Print Environment Variables
+        run: printenv
       - name: Install Packer
         run: >
           curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
