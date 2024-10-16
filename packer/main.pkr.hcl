@@ -71,8 +71,15 @@ build {
       # Set up PostgreSQL database with variables and grant necessary privileges
       "sudo -u postgres psql -c \"CREATE DATABASE ${var.db_name};\"",
       "sudo -u postgres psql -c \"CREATE USER ${var.db_username} WITH PASSWORD '${var.db_password}';\"",
+
+      # Grant all privileges to the user on the database
       "sudo -u postgres psql -c \"GRANT ALL PRIVILEGES ON DATABASE ${var.db_name} TO ${var.db_username};\"",
-      "sudo -u postgres psql -c \"ALTER USER ${var.db_username} CREATEDB CREATEROLE;\""
+
+      # Grant SUPERUSER privileges to ensure full control (can create schemas, tables, etc.)
+      "sudo -u postgres psql -c \"ALTER USER ${var.db_username} WITH SUPERUSER;\"",
+
+      # Explicitly grant CREATE privilege for schemas
+      "sudo -u postgres psql -c \"GRANT CREATE ON DATABASE ${var.db_name} TO ${var.db_username};\""
     ]
   }
 
