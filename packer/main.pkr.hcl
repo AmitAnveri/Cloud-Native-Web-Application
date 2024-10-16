@@ -33,29 +33,14 @@ variable "ami_name_prefix" {
   default     = "webapp-ami"
 }
 
-variable "instance_type" {
-  description = "ec2 instance type"
-  type        = string
-  default     = "t2.micro"
-}
-
-variable "region" {
-  description = "AMI build region"
-  type        = string
-  default     = "us-east-1"
-}
-
-
 locals {
   ami_name = "${var.ami_name_prefix}-${formatdate("YYYYMMDD-HHmm", timestamp())}"
 }
 
 source "amazon-ebs" "ubuntu" {
-  region        = var.region
-  instance_type = var.instance_type
+  instance_type = "${env("INSTANCE_TYPE")}"
   ami_name      = local.ami_name
   ssh_username  = "ubuntu"
-  profile       = "dev"
   source_ami    = "ami-0866a3c8686eaeeba"
 }
 
@@ -94,10 +79,9 @@ build {
     ]
   }
 
-  # 4. Download the JAR file from the artifact URL (GitHub/S3) and move it to /opt/myapp
+  # 4. Move it to /opt/myapp
   provisioner "shell" {
     inline = [
-      # Download the JAR file using curl (you can switch this with an S3 download if needed)
       "sudo curl -L -o /opt/myapp/webapp.jar ${var.artifact_url}",
       "sudo chown csye6225:csye6225 /opt/myapp/webapp.jar"
     ]
@@ -116,8 +100,7 @@ build {
 
       # Reload systemd and enable the service
       "sudo systemctl daemon-reload",
-      "sudo systemctl enable webapp.service",
-      "sudo systemctl start webapp.service"
+      "sudo systemctl enable webapp.service"
     ]
   }
 }
