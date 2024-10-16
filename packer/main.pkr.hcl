@@ -87,13 +87,15 @@ build {
 
   # 4. Copy the JAR from the local file to the instance
   provisioner "file" {
-    source = var.artifact_path
-    destination = "/opt/myapp/webapp.jar"
+    source      = var.artifact_path
+    destination = "/tmp/webapp.jar"
   }
 
   provisioner "shell" {
     inline = [
-      "sudo chown csye6225:csye6225 /opt/myapp/webapp.jar"
+      "sudo mv /tmp/webapp.jar /opt/myapp/webapp.jar",
+      "sudo chown csye6225:csye6225 /opt/myapp/webapp.jar",
+      "sudo chmod 755 /opt/myapp/webapp.jar"
     ]
   }
 
