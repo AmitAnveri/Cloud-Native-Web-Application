@@ -68,10 +68,11 @@ build {
       "sudo systemctl start postgresql",
       "sudo systemctl enable postgresql",
 
-      # Set up PostgreSQL database with variables
+      # Set up PostgreSQL database with variables and grant necessary privileges
       "sudo -u postgres psql -c \"CREATE DATABASE ${var.db_name};\"",
       "sudo -u postgres psql -c \"CREATE USER ${var.db_username} WITH PASSWORD '${var.db_password}';\"",
-      "sudo -u postgres psql -c \"GRANT ALL PRIVILEGES ON DATABASE ${var.db_name} TO ${var.db_username};\""
+      "sudo -u postgres psql -c \"GRANT ALL PRIVILEGES ON DATABASE ${var.db_name} TO ${var.db_username};\"",
+      "sudo -u postgres psql -c \"ALTER USER ${var.db_username} CREATEDB CREATEROLE;\""
     ]
   }
 
@@ -102,8 +103,8 @@ build {
   # 5. Set environment variables and configure the systemd service
   provisioner "shell" {
     inline = [
-      # Set environment variables
-      "echo 'DB_URL=${var.db_name}' | sudo tee -a /etc/environment",
+      # Set full DB_URL with host and port
+      "echo 'DB_URL=jdbc:postgresql://localhost:5432/${var.db_name}' | sudo tee -a /etc/environment",
       "echo 'DB_USERNAME=${var.db_username}' | sudo tee -a /etc/environment",
       "echo 'DB_PASSWORD=${var.db_password}' | sudo tee -a /etc/environment",
 
