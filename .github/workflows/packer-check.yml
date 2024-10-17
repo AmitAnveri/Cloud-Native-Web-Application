@@ -4,8 +4,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - packer/**
 jobs:
   packer-check:
     runs-on: ubuntu-latest
