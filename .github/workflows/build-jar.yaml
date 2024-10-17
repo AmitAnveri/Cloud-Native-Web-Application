@@ -74,4 +74,5 @@ jobs:
                        -var 'db_username=${{ secrets.DB_USERNAME }}' \
                        -var 'db_password=${{ secrets.DB_PASSWORD }}' \
                        -var 'instance_type=${{ secrets.INSTANCE_TYPE }}' \
+                       -var 'source_ami=${{secrets.SOURCE_AMI}}' \
                        main.pkr.hcl
