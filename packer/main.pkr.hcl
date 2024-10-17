@@ -38,16 +38,21 @@ variable "instance_type" {
   type        = string
 }
 
+variable "source_ami"{
+  description = "EC2 source AMI id"
+  type        = string
+  default = "ami-0866a3c8686eaeeba"
+}
+
 locals {
   ami_name = "${var.ami_name_prefix}-${formatdate("YYYYMMDD-HHmm", timestamp())}"
 }
 
-# Configure the EC2 instance
 source "amazon-ebs" "ubuntu" {
   instance_type = var.instance_type
   ami_name      = local.ami_name
   ssh_username  = "ubuntu"
-  source_ami    = "ami-0866a3c8686eaeeba"
+  source_ami    = var.source_ami
 }
 
 build {
