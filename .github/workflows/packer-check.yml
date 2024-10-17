@@ -1,40 +1,44 @@
----
-name: Packer Status Check
+name: Validate Packer Template
+
 on:
   pull_request:
     branches:
       - main
+
 jobs:
-  packer-check:
+  validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Install Packer
-        run: >
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Packer
+        run: |
           curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-
           sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-
           sudo apt-get update && sudo apt-get install packer
-      - name: Initialize Packer
+
+      - name: Create fake JAR file
+        run: |
+          mkdir -p /tmp/ && touch /tmp/test.jar
+
+      - name: Initialize Packer in packer directory
         run: |
           cd packer/
           packer init main.pkr.hcl
-      - name: Run packer fmt
+
+      - name: Format Packer files
         run: |
           cd packer/
-          packer fmt -check -diff main.pkr.hcl
-        continue-on-error: false
-      - name: Run packer validate
+          packer fmt -check -diff .
+
+      - name: Validate Packer Template
         run: |
           cd packer/
           packer validate \
             -var "artifact_path=/tmp/test.jar" \
-            -var "db_name=test_db" \
-            -var "db_username=test_user" \
-            -var "db_password=test_password" \
+            -var "db_name=testdb" \
+            -var "db_username=testuser" \
+            -var "db_password=testpassword" \
             -var "instance_type=t2.micro" \
-            -var "skip_copy=true" \
             main.pkr.hcl
-        continue-on-error: false
