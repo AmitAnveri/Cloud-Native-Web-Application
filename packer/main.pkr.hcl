@@ -112,7 +112,7 @@ build {
       "sudo chown csye6225:csye6225 /opt/myapp/webapp.jar",
       "sudo chmod 755 /opt/myapp/webapp.jar"
     ]
-    only_if     = "!var.skip_copy"
+    only_if = "!var.skip_copy"
   }
 
   # 5. Set environment variables and configure the systemd service
