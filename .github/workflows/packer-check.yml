@@ -1,0 +1,31 @@
+---
+name: Packer Status Check
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - packer/**
+jobs:
+  packer-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Packer
+        run: >
+          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+
+          sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+
+          sudo apt-get update && sudo apt-get install packer
+      - name: Run packer fmt
+        run: |
+          cd packer/
+          packer fmt -check -diff main.pkr.hcl
+        continue-on-error: false
+      - name: Run packer validate
+        run: |
+          cd packer/
+          packer validate main.pkr.hcl
+        continue-on-error: false
