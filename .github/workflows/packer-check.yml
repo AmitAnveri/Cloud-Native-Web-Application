@@ -35,5 +35,6 @@ jobs:
             -var "db_username=test_user" \
             -var "db_password=test_password" \
             -var "instance_type=t2.micro" \
+            -var "skip_copy=true" \
             main.pkr.hcl
         continue-on-error: false

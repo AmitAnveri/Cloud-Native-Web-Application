@@ -42,6 +42,12 @@ locals {
   ami_name = "${var.ami_name_prefix}-${formatdate("YYYYMMDD-HHmm", timestamp())}"
 }
 
+variable "skip_copy" {
+  description = "Skip copying the artifact during validation"
+  type        = bool
+  default     = false
+}
+
 # Configure the EC2 instance
 source "amazon-ebs" "ubuntu" {
   instance_type = var.instance_type
@@ -97,6 +103,7 @@ build {
   provisioner "file" {
     source      = var.artifact_path
     destination = "/tmp/webapp.jar"
+    only_if     = "!var.skip_copy"
   }
 
   provisioner "shell" {
@@ -105,6 +112,7 @@ build {
       "sudo chown csye6225:csye6225 /opt/myapp/webapp.jar",
       "sudo chmod 755 /opt/myapp/webapp.jar"
     ]
+    only_if     = "!var.skip_copy"
   }
 
   # 5. Set environment variables and configure the systemd service
