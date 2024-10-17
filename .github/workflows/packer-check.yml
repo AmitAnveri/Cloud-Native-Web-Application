@@ -17,6 +17,10 @@ jobs:
           sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
 
           sudo apt-get update && sudo apt-get install packer
+      - name: Initialize Packer
+        run: |
+          cd packer/
+          packer init main.pkr.hcl
       - name: Run packer fmt
         run: |
           cd packer/
