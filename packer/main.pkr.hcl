@@ -38,10 +38,10 @@ variable "instance_type" {
   type        = string
 }
 
-variable "source_ami"{
+variable "source_ami" {
   description = "EC2 source AMI id"
   type        = string
-  default = "ami-0866a3c8686eaeeba"
+  default     = "ami-0866a3c8686eaeeba"
 }
 
 locals {
