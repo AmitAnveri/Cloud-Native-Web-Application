@@ -29,5 +29,11 @@ jobs:
       - name: Run packer validate
         run: |
           cd packer/
-          packer validate main.pkr.hcl
+          packer validate \
+            -var "artifact_path=/tmp/test.jar" \
+            -var "db_name=test_db" \
+            -var "db_username=test_user" \
+            -var "db_password=test_password" \
+            -var "instance_type=t2.micro" \
+            main.pkr.hcl
         continue-on-error: false
