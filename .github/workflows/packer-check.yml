@@ -34,8 +34,5 @@ jobs:
           cd packer/
           packer validate \
             -var "artifact_path=/tmp/test.jar" \
-            -var "db_name=testdb" \
-            -var "db_username=testuser" \
-            -var "db_password=testpassword" \
             -var "instance_type=t2.micro" \
             main.pkr.hcl
