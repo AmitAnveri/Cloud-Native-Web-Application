@@ -80,7 +80,7 @@ build {
   provisioner "shell" {
     inline = [
       # Create a systemd service to run the application
-      "sudo bash -c 'cat <<EOF > /etc/systemd/system/webapp.service\n[Unit]\nDescription=CSYE6225 WebApp\nAfter=network.target\n\n[Service]\nUser=csye6225\nExecStart=/usr/bin/java -jar /opt/myapp/webapp.jar\nRestart=always\n\n[Install]\nWantedBy=multi-user.target\nEOF'",
+      "sudo bash -c 'cat <<EOF > /etc/systemd/system/webapp.service\n[Unit]\nDescription=CSYE6225 WebApp\nAfter=network.target\n\n[Service]\nUser=csye6225\nEnvironmentFile=/etc/environment\nExecStart=/usr/bin/java -jar /opt/myapp/webapp.jar\nWorkingDirectory=/opt/myapp\nRestart=always\n\n[Install]\nWantedBy=multi-user.target\nEOF'",
 
       # Reload systemd and enable the service
       "sudo systemctl daemon-reload",
