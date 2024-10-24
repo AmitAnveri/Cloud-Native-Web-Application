@@ -68,9 +68,16 @@ jobs:
           cd packer/
           packer init main.pkr.hcl
       - name: Deploy AMI with Packer
+        id: packer
         run: |
           cd packer
-          packer build  -var "artifact_path=../webapp-0.0.1-SNAPSHOT.jar" \
-                       -var 'instance_type=${{ secrets.INSTANCE_TYPE }}' \
-                       -var 'source_ami=${{secrets.SOURCE_AMI}}' \
-                       main.pkr.hcl
+          packer build -var "artifact_path=../webapp-0.0.1-SNAPSHOT.jar" \
+                       -var "instance_type=${{ secrets.INSTANCE_TYPE }}" \
+                       -var "source_ami=${{ secrets.SOURCE_AMI }}" \
+                       -machine-readable main.pkr.hcl | tee build.log
+          AMI_ID=$(awk -F, '$0 ~/artifact,0,id/ {print $6}' build.log)
+          echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
+      - name: Share AMI with target account
+        run: >
+          aws ec2 modify-image-attribute --image-id ${{ env.AMI_ID }} \
+                                         --launch-permission "Add=[{UserId=${{ secrets.TARGET_ACCOUNT_ID }}]"
