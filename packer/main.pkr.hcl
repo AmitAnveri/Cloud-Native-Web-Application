@@ -87,4 +87,20 @@ build {
       "sudo systemctl enable webapp.service"
     ]
   }
+
+  # 5. Install and Configure CloudWatch Agent
+  provisioner "shell" {
+    inline = [
+      # Download and install the CloudWatch Agent
+      "cd /tmp",
+      "curl -O https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb",
+      "sudo dpkg -i -E ./amazon-cloudwatch-agent.deb",
+
+      # Create the CloudWatch Agent configuration file
+      "sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<EOF\n{\n  \"metrics\": {\n    \"namespace\": \"WebApp\",\n    \"metrics_collected\": {\n      \"statsd\": {\n        \"service_address\": \"localhost:8125\"\n      }\n    }\n  }\n}\nEOF",
+
+      # Start the CloudWatch Agent with the configuration
+      "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s"
+    ]
+  }
 }
