@@ -1,5 +1,6 @@
 package com.csye6225.webapp.controller;
 
+import com.csye6225.webapp.dto.ProfilePicResponseDto;
 import com.csye6225.webapp.dto.UserRequestDto;
 import com.csye6225.webapp.dto.UserResponseDto;
 import com.csye6225.webapp.dto.UserUpdateRequestDto;
@@ -8,10 +9,14 @@ import com.timgroup.statsd.StatsDClient;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/v1/user")
@@ -111,5 +116,29 @@ public class UserController {
         statsDClient.recordExecutionTime("api.user.handleOptionsBase.time", duration);
 
         return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
+    }
+
+    @PostMapping(value = "/pic", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ProfilePicResponseDto> addOrUpdateProfilePic(@RequestParam("profilePic") MultipartFile profilePic) throws IOException {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userEmail = userDetails.getUsername();
+
+        statsDClient.incrementCounter("api.user.addOrUpdateProfilePic.call_count");
+
+        ProfilePicResponseDto responseDto = userService.uploadProfilePic(userEmail, profilePic);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+    }
+
+    @DeleteMapping("/pic")
+    public ResponseEntity<?> deleteProfilePic() {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userEmail = userDetails.getUsername();
+
+        statsDClient.incrementCounter("api.user.deleteProfilePic.call_count");
+
+        userService.deleteProfilePic(userEmail);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

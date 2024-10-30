@@ -28,7 +28,10 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.7.0'
     testImplementation 'org.mockito:mockito-core:3.7.7'
     implementation 'com.timgroup:java-statsd-client:3.1.0'
-
+//    implementation platform('software.amazon.awssdk:bom:2.29.3')
+//    implementation 'software.amazon.awssdk:aws-core'
+//    implementation 'software.amazon.awssdk:aws:s3'
+    implementation 'com.amazonaws:aws-java-sdk-s3:1.12.545'
 }
 
 tasks.named('test') {

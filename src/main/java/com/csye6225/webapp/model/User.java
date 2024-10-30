@@ -34,6 +34,9 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime accountUpdated;
 
+    @Column(name = "profile_pic_url")
+    private String profilePicUrl;
+
     public String getEmail() {
         return email;
     }
@@ -84,5 +87,13 @@ public class User {
 
     public Long getId() {
         return id;
+    }
+
+    public String getProfilePicUrl() {
+        return profilePicUrl;
+    }
+
+    public void setProfilePicUrl(String profilePicUrl) {
+        this.profilePicUrl = profilePicUrl;
     }
 }
