@@ -24,16 +24,21 @@ public class HealthCheckController {
     @GetMapping
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<Void> healthCheck(HttpServletRequest request) {
+        // Start the timer for this API
+        long start = System.currentTimeMillis();
 
-        // Increment the counter for this API
         statsDClient.incrementCounter("api.healthz.call_count");
 
-        // Check if request has payload
         if (request.getContentLength() > 0 || request.getQueryString() != null) {
+            long duration = System.currentTimeMillis() - start;
+            statsDClient.recordExecutionTime("api.healthz.time", duration);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
         boolean isDbConnected = healthCheckService.isDatabaseConnected();
+
+        long duration = System.currentTimeMillis() - start;
+        statsDClient.recordExecutionTime("api.healthz.time", duration);
 
         if (isDbConnected) {
             return ResponseEntity.ok().header("Cache-Control", "no-cache").build();

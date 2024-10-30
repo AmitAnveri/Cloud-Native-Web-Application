@@ -5,6 +5,7 @@ import com.csye6225.webapp.dto.UserResponseDto;
 import com.csye6225.webapp.dto.UserUpdateRequestDto;
 import com.csye6225.webapp.model.User;
 import com.csye6225.webapp.repository.UserRepository;
+import com.timgroup.statsd.StatsDClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -31,9 +33,15 @@ class UserServiceTest {
     @Mock
     private BCryptPasswordEncoder passwordEncoder;
 
+    @Mock
+    private StatsDClient statsDClient;
+
     @BeforeEach
     void setUp() {
         openMocks(this);
+
+        doNothing().when(statsDClient).incrementCounter(Mockito.anyString());
+        doNothing().when(statsDClient).recordExecutionTime(Mockito.anyString(), Mockito.anyLong());
     }
 
     @Test
