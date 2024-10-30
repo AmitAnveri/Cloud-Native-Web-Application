@@ -26,30 +26,40 @@ public class UserController {
     // Get Authenticated User Details
     @GetMapping("/self")
     public ResponseEntity<?> getUserDetails() {
-        // Increment the counter for the getUserDetails API
+        // Start the timer for this API
+        long start = System.currentTimeMillis();
+
         statsDClient.incrementCounter("api.user.getUserDetails.call_count");
 
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String userEmail = userDetails.getUsername();
         UserResponseDto userResponseDto = userService.getUserByEmail(userEmail);
+
+        // Calculate and record execution time
+        long duration = System.currentTimeMillis() - start;
+        statsDClient.recordExecutionTime("api.user.getUserDetails.time", duration);
+
         return new ResponseEntity<>(userResponseDto, HttpStatus.OK);
     }
 
     @PostMapping
     public ResponseEntity<?> createUser(@Valid @RequestBody UserRequestDto userRequestDto) {
-        // Increment the counter for the createUser API
+        long start = System.currentTimeMillis();
+
         statsDClient.incrementCounter("api.user.createUser.call_count");
 
-        // Create the user
         UserResponseDto createdUser = userService.createUser(userRequestDto);
 
-        // Return 201 Created status with user data
+        long duration = System.currentTimeMillis() - start;
+        statsDClient.recordExecutionTime("api.user.createUser.time", duration);
+
         return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }
 
     @PutMapping("/self")
     public ResponseEntity<?> updateUser(@Valid @RequestBody UserUpdateRequestDto userUpdateRequestDto) {
-        // Increment the counter for the updateUser API
+        long start = System.currentTimeMillis();
+
         statsDClient.incrementCounter("api.user.updateUser.call_count");
 
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -58,32 +68,48 @@ public class UserController {
         if (!userEmail.equals(userUpdateRequestDto.getEmail())) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+
         userService.updateUser(userEmail, userUpdateRequestDto);
+
+        long duration = System.currentTimeMillis() - start;
+        statsDClient.recordExecutionTime("api.user.updateUser.time", duration);
+
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @RequestMapping(value = "/self", method = RequestMethod.HEAD)
     public ResponseEntity<?> handleHead() {
-        // Increment the counter for the handleHead API
+        long start = System.currentTimeMillis();
+
         statsDClient.incrementCounter("api.user.handleHead.call_count");
+
+        long duration = System.currentTimeMillis() - start;
+        statsDClient.recordExecutionTime("api.user.handleHead.time", duration);
 
         return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
     }
 
     @RequestMapping(value = "/self", method = RequestMethod.OPTIONS)
     public ResponseEntity<?> handleOptions() {
-        // Increment the counter for the handleOptions API
+        long start = System.currentTimeMillis();
+
         statsDClient.incrementCounter("api.user.handleOptions.call_count");
+
+        long duration = System.currentTimeMillis() - start;
+        statsDClient.recordExecutionTime("api.user.handleOptions.time", duration);
 
         return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
     }
 
     @RequestMapping(method = RequestMethod.OPTIONS)
     public ResponseEntity<?> handleOptionsBase() {
-        // Increment the counter for the handleOptionsBase API
+        long start = System.currentTimeMillis();
+
         statsDClient.incrementCounter("api.user.handleOptionsBase.call_count");
+
+        long duration = System.currentTimeMillis() - start;
+        statsDClient.recordExecutionTime("api.user.handleOptionsBase.time", duration);
 
         return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
     }
-
 }
