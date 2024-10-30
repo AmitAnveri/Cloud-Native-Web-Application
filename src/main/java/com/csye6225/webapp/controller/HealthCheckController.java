@@ -1,6 +1,7 @@
 package com.csye6225.webapp.controller;
 
 import com.csye6225.webapp.service.HealthCheckService;
+import com.timgroup.statsd.StatsDClient;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,11 +18,17 @@ public class HealthCheckController {
     @Autowired
     private HealthCheckService healthCheckService;
 
+    @Autowired
+    private StatsDClient statsDClient;
+
     @GetMapping
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<Void> healthCheck(HttpServletRequest request) {
 
-        //check if request has payload
+        // Increment the counter for this API
+        statsDClient.incrementCounter("api.healthz.call_count");
+
+        // Check if request has payload
         if (request.getContentLength() > 0 || request.getQueryString() != null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
