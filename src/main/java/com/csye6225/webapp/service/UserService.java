@@ -123,8 +123,7 @@ public class UserService {
         String uniqueId = UUID.randomUUID().toString();
 
 
-        amazonS3.putObject(new PutObjectRequest(bucketName, key, file.getInputStream(), null)
-                .withCannedAcl(CannedAccessControlList.PublicRead));
+        amazonS3.putObject(new PutObjectRequest(bucketName, key, file.getInputStream(), null));
 
         user.setProfilePicUrl(key);
         userRepository.save(user);
