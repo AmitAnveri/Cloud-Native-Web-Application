@@ -125,9 +125,7 @@ public class UserController {
 
         statsDClient.incrementCounter("api.user.addOrUpdateProfilePic.call_count");
 
-        ProfilePicResponseDto responseDto = userService.uploadProfilePic(userEmail, profilePic);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+        return userService.uploadProfilePic(userEmail, profilePic);
     }
 
     @DeleteMapping("/pic")
@@ -137,8 +135,6 @@ public class UserController {
 
         statsDClient.incrementCounter("api.user.deleteProfilePic.call_count");
 
-        userService.deleteProfilePic(userEmail);
-
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        return userService.deleteProfilePic(userEmail);
     }
 }

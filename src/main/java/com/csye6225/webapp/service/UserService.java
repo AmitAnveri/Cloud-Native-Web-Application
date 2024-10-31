@@ -16,10 +16,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -113,13 +113,13 @@ public class UserService {
         logger.info("User with email {} updated successfully", email);
     }
 
-    public ProfilePicResponseDto uploadProfilePic(String userEmail, MultipartFile file) throws IOException {
+    public ResponseEntity<ProfilePicResponseDto> uploadProfilePic(String userEmail, MultipartFile file) throws IOException {
         User user = userRepository.findByEmail(userEmail);
 
         // Check if the user already has an image uploaded
         if (user.getProfilePicUrl() != null) {
             logger.warn("User with email {} already has a profile picture", userEmail);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile picture already exists.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
         logger.info("Uploading profile picture for user with email: {}", userEmail);
@@ -135,30 +135,32 @@ public class UserService {
 
         logger.info("Profile picture uploaded successfully for user: {}", userEmail);
 
-        return new ProfilePicResponseDto(
+        ProfilePicResponseDto responseDto = new ProfilePicResponseDto(
                 fileName,
                 uniqueId,
                 amazonS3.getUrl(bucketName, key).toString(),
                 LocalDate.now(),
                 user.getId().toString()
         );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
-    public void deleteProfilePic(String userEmail) {
+    public ResponseEntity<?> deleteProfilePic(String userEmail) {
         User user = userRepository.findByEmail(userEmail);
         String key = user.getProfilePicUrl();
 
         if (key == null || !amazonS3.doesObjectExist(bucketName, key)) {
             logger.warn("No profile picture found for user with email: {}", userEmail);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile picture not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
         logger.info("Deleting profile picture for user with email: {}", userEmail);
-
-        amazonS3.deleteObject(new DeleteObjectRequest(bucketName, key));
         user.setProfilePicUrl(null);
         userRepository.save(user);
-
+        amazonS3.deleteObject(new DeleteObjectRequest(bucketName, key));
         logger.info("Profile picture deleted successfully for user: {}", userEmail);
+
+        return ResponseEntity.noContent().build();
     }
 }
