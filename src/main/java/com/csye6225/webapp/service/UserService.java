@@ -16,10 +16,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -50,10 +50,13 @@ public class UserService {
         logger.info("Attempting to create user with email: {}", userRequestDto.getEmail());
 
         if (userRepository.existsByEmail(userRequestDto.getEmail())) {
+            long durationExists = System.currentTimeMillis() - startExists;
+            statsDClient.recordExecutionTime("db.userRepository.existsByEmail.time", durationExists);
             logger.warn("User with email {} already exists", userRequestDto.getEmail());
-            statsDClient.recordExecutionTime("db.userRepository.existsByEmail.time", System.currentTimeMillis() - startExists);
             throw new UserAlreadyExistsException("User with this email already exists.");
         }
+        long durationExists = System.currentTimeMillis() - startExists;
+        statsDClient.recordExecutionTime("db.userRepository.existsByEmail.time", durationExists);
 
         User user = new User();
         user.setEmail(userRequestDto.getEmail());
@@ -63,23 +66,24 @@ public class UserService {
 
         long startSave = System.currentTimeMillis();
         userRepository.save(user);
-        statsDClient.recordExecutionTime("db.userRepository.save.time", System.currentTimeMillis() - startSave);
+        long durationSave = System.currentTimeMillis() - startSave;
+        statsDClient.recordExecutionTime("db.userRepository.save.time", durationSave);
         logger.info("User with email {} created successfully", userRequestDto.getEmail());
 
         return mapToUserResponseDto(user);
     }
 
     public UserResponseDto getUserByEmail(String email) {
-        long start = System.currentTimeMillis();
+        long startFind = System.currentTimeMillis();
         logger.info("Fetching user with email: {}", email);
 
         User user = userRepository.findByEmail(email);
+        long durationFind = System.currentTimeMillis() - startFind;
+        statsDClient.recordExecutionTime("db.userRepository.findByEmail.time", durationFind);
+
         if (user == null) {
             logger.warn("User with email {} not found", email);
         }
-
-        long duration = System.currentTimeMillis() - start;
-        statsDClient.recordExecutionTime("db.userRepository.findByEmail.time", duration);
 
         return mapToUserResponseDto(user);
     }
@@ -101,7 +105,8 @@ public class UserService {
         logger.info("Updating user with email: {}", email);
 
         User user = userRepository.findByEmail(email);
-        statsDClient.recordExecutionTime("db.userRepository.findByEmail.time", System.currentTimeMillis() - startFind);
+        long durationFind = System.currentTimeMillis() - startFind;
+        statsDClient.recordExecutionTime("db.userRepository.findByEmail.time", durationFind);
 
         user.setFirstName(userUpdateRequestDto.getFirstName());
         user.setLastName(userUpdateRequestDto.getLastName());
@@ -109,17 +114,20 @@ public class UserService {
 
         long startSave = System.currentTimeMillis();
         userRepository.save(user);
-        statsDClient.recordExecutionTime("db.userRepository.save.time", System.currentTimeMillis() - startSave);
+        long durationSave = System.currentTimeMillis() - startSave;
+        statsDClient.recordExecutionTime("db.userRepository.save.time", durationSave);
         logger.info("User with email {} updated successfully", email);
     }
 
-    public ProfilePicResponseDto uploadProfilePic(String userEmail, MultipartFile file) throws IOException {
+    public ResponseEntity<ProfilePicResponseDto> uploadProfilePic(String userEmail, MultipartFile file) throws IOException {
+        long startFind = System.currentTimeMillis();
         User user = userRepository.findByEmail(userEmail);
+        long durationFind = System.currentTimeMillis() - startFind;
+        statsDClient.recordExecutionTime("db.userRepository.findByEmail.time", durationFind);
 
-        // Check if the user already has an image uploaded
         if (user.getProfilePicUrl() != null) {
             logger.warn("User with email {} already has a profile picture", userEmail);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile picture already exists.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
         logger.info("Uploading profile picture for user with email: {}", userEmail);
@@ -128,37 +136,79 @@ public class UserService {
         String key = "profile-pictures/" + user.getId() + "/" + fileName;
         String uniqueId = UUID.randomUUID().toString();
 
+        long startS3Put = System.currentTimeMillis();
         amazonS3.putObject(new PutObjectRequest(bucketName, key, file.getInputStream(), null));
+        long durationS3Put = System.currentTimeMillis() - startS3Put;
+        statsDClient.recordExecutionTime("aws.s3.putObject.time", durationS3Put);
 
         user.setProfilePicUrl(key);
+
+        long startSave = System.currentTimeMillis();
         userRepository.save(user);
+        long durationSave = System.currentTimeMillis() - startSave;
+        statsDClient.recordExecutionTime("db.userRepository.save.time", durationSave);
 
         logger.info("Profile picture uploaded successfully for user: {}", userEmail);
 
-        return new ProfilePicResponseDto(
-                fileName,
-                uniqueId,
-                amazonS3.getUrl(bucketName, key).toString(),
-                LocalDate.now(),
-                user.getId().toString()
-        );
+        ProfilePicResponseDto responseDto = new ProfilePicResponseDto(fileName, uniqueId, amazonS3.getUrl(bucketName, key).toString(), LocalDate.now(), user.getId().toString());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
-    public void deleteProfilePic(String userEmail) {
+    public ResponseEntity<?> deleteProfilePic(String userEmail) {
+        long startFind = System.currentTimeMillis();
         User user = userRepository.findByEmail(userEmail);
+        long durationFind = System.currentTimeMillis() - startFind;
+        statsDClient.recordExecutionTime("db.userRepository.findByEmail.time", durationFind);
+
         String key = user.getProfilePicUrl();
 
         if (key == null || !amazonS3.doesObjectExist(bucketName, key)) {
             logger.warn("No profile picture found for user with email: {}", userEmail);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile picture not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
         logger.info("Deleting profile picture for user with email: {}", userEmail);
 
+        long startS3Delete = System.currentTimeMillis();
         amazonS3.deleteObject(new DeleteObjectRequest(bucketName, key));
+        long durationS3Delete = System.currentTimeMillis() - startS3Delete;
+        statsDClient.recordExecutionTime("aws.s3.deleteObject.time", durationS3Delete);
+
         user.setProfilePicUrl(null);
+
+        long startSave = System.currentTimeMillis();
         userRepository.save(user);
+        long durationSave = System.currentTimeMillis() - startSave;
+        statsDClient.recordExecutionTime("db.userRepository.save.time", durationSave);
 
         logger.info("Profile picture deleted successfully for user: {}", userEmail);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    public ResponseEntity<?> getProfilePic(String userEmail) {
+        long startFind = System.currentTimeMillis();
+        User user = userRepository.findByEmail(userEmail);
+        long durationFind = System.currentTimeMillis() - startFind;
+        statsDClient.recordExecutionTime("db.userRepository.findByEmail.time", durationFind);
+
+        String key = user.getProfilePicUrl();
+
+        if (key == null || !amazonS3.doesObjectExist(bucketName, key)) {
+            logger.warn("No profile picture found for user with email: {}", userEmail);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        logger.info("Profile picture found for user with email: {}", userEmail);
+
+        long startS3GetUrl = System.currentTimeMillis();
+        String url = amazonS3.getUrl(bucketName, key).toString();
+        long durationS3GetUrl = System.currentTimeMillis() - startS3GetUrl;
+        statsDClient.recordExecutionTime("aws.s3.getUrl.time", durationS3GetUrl);
+
+        ProfilePicResponseDto responseDto = new ProfilePicResponseDto(user.getProfilePicUrl(), user.getId().toString(), url, LocalDate.now(), user.getId().toString());
+
+        return ResponseEntity.ok(responseDto);
     }
 }
