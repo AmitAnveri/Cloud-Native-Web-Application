@@ -6,6 +6,7 @@ import com.csye6225.webapp.dto.UserResponseDto;
 import com.csye6225.webapp.dto.UserUpdateRequestDto;
 import com.csye6225.webapp.service.UserService;
 import com.timgroup.statsd.StatsDClient;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,11 +31,17 @@ public class UserController {
 
     // Get Authenticated User Details
     @GetMapping("/self")
-    public ResponseEntity<?> getUserDetails() {
+    public ResponseEntity<?> getUserDetails(HttpServletRequest request) {
         // Start the timer for this API
         long start = System.currentTimeMillis();
 
         statsDClient.incrementCounter("api.user.getUserDetails.call_count");
+
+        if (request.getContentLength() > 0 || request.getQueryString() != null) {
+            long duration = System.currentTimeMillis() - start;
+            statsDClient.recordExecutionTime("api.getUserDetails.time", duration);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
 
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String userEmail = userDetails.getUsername();
@@ -116,6 +123,22 @@ public class UserController {
         statsDClient.recordExecutionTime("api.user.handleOptionsBase.time", duration);
 
         return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
+    }
+
+    @GetMapping("/self/pic")
+    public ResponseEntity<?> getProfilePic(HttpServletRequest request) {
+        long start = System.currentTimeMillis();
+        statsDClient.incrementCounter("api.user.getProfilePic.call_count");
+        if (request.getContentLength() > 0 || request.getQueryString() != null) {
+            long duration = System.currentTimeMillis() - start;
+            statsDClient.recordExecutionTime("api.getProfilePic.time", duration);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userEmail = userDetails.getUsername();
+        long duration = System.currentTimeMillis() - start;
+        statsDClient.recordExecutionTime("api.getProfilePic.time", duration);
+        return userService.getProfilePic(userEmail);
     }
 
     @PostMapping(value = "/pic", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

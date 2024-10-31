@@ -163,4 +163,26 @@ public class UserService {
 
         return ResponseEntity.noContent().build();
     }
+
+    public ResponseEntity<?> getProfilePic(String userEmail) {
+        User user = userRepository.findByEmail(userEmail);
+        String key = user.getProfilePicUrl();
+
+        if (key == null || !amazonS3.doesObjectExist(bucketName, key)) {
+            logger.warn("No profile picture found for user with email: {}", userEmail);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        logger.info("Profile picture found for user with email: {}", userEmail);
+
+        ProfilePicResponseDto responseDto = new ProfilePicResponseDto(
+                user.getProfilePicUrl(),
+                user.getId().toString(),
+                amazonS3.getUrl(bucketName, key).toString(),
+                LocalDate.now(),
+                user.getId().toString()
+        );
+
+        return ResponseEntity.ok(responseDto);
+    }
 }

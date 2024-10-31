@@ -36,10 +36,9 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(authorizeRequests -> authorizeRequests.requestMatchers("/v1/user/self").authenticated() // Protect the GET and POST user API
-                        .anyRequest().permitAll() // Allow public access to other APIs
-                ).httpBasic(httpBasic -> httpBasic.authenticationEntryPoint(customAuthenticationEntryPoint));
+        http.csrf(csrf -> csrf.disable()).authorizeHttpRequests(authorizeRequests -> authorizeRequests.requestMatchers("/v1/user/self", "/v1/user/self/pic").authenticated() // Protect the GET and POST user API
+                .anyRequest().permitAll() // Allow public access to other APIs
+        ).httpBasic(httpBasic -> httpBasic.authenticationEntryPoint(customAuthenticationEntryPoint));
 
         return http.build();
     }
