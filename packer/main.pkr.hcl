@@ -88,6 +88,14 @@ build {
     ]
   }
 
+  provisioner "shell" {
+    inline = [
+      "sudo mkdir -p /var/log/myapp",
+      "sudo chown csye6225:csye6225 /var/log/myapp",
+      "sudo chmod 755 /var/log/myapp"
+    ]
+  }
+
   # 5. Install and Configure CloudWatch Agent
   provisioner "shell" {
     inline = [
@@ -97,7 +105,7 @@ build {
       "sudo dpkg -i -E ./amazon-cloudwatch-agent.deb",
 
       # Create the CloudWatch Agent configuration file
-      "sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<EOF\n{\n  \"metrics\": {\n    \"namespace\": \"WebApp\",\n    \"metrics_collected\": {\n      \"statsd\": {\n        \"service_address\": \"localhost:8125\"\n      }\n    }\n  }\n}\nEOF",
+      "sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<EOF\n{\n  \"logs\": {\n    \"logs_collected\": {\n      \"files\": {\n        \"collect_list\": [\n          {\n            \"file_path\": \"/var/log/myapp/application.log\",\n            \"log_group_name\": \"myapp-log-group\",\n            \"log_stream_name\": \"{instance_id}\",\n            \"timezone\": \"UTC\"\n          }\n        ]\n      }\n    }\n  },\n  \"metrics\": {\n    \"namespace\": \"WebApp\",\n    \"metrics_collected\": {\n      \"statsd\": {\n        \"service_address\": \"localhost:8125\"\n      }\n    }\n  }\n}\nEOF",
 
       # Start the CloudWatch Agent with the configuration
       "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s"
