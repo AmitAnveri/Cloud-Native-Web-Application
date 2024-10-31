@@ -1,7 +1,6 @@
 package com.csye6225.webapp.service;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.csye6225.webapp.dto.ProfilePicResponseDto;
@@ -14,9 +13,11 @@ import com.csye6225.webapp.repository.UserRepository;
 import com.timgroup.statsd.StatsDClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -118,13 +119,18 @@ public class UserService {
     public ProfilePicResponseDto uploadProfilePic(String userEmail, MultipartFile file) throws IOException {
         User user = userRepository.findByEmail(userEmail);
 
+        // Check if the user already has an image uploaded
+        if (user.getProfilePicUrl() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
         String fileName = file.getOriginalFilename();
         String key = "profile-pictures/" + user.getId() + "/" + fileName;
         String uniqueId = UUID.randomUUID().toString();
 
-
         amazonS3.putObject(new PutObjectRequest(bucketName, key, file.getInputStream(), null));
 
+        // Store the image metadata in the user entity
         user.setProfilePicUrl(key);
         userRepository.save(user);
 
@@ -141,11 +147,14 @@ public class UserService {
         User user = userRepository.findByEmail(userEmail);
         String key = user.getProfilePicUrl();
 
-        if (key != null && amazonS3.doesObjectExist(bucketName, key)) {
-            amazonS3.deleteObject(new DeleteObjectRequest(bucketName, key));
+        if (key == null || !amazonS3.doesObjectExist(bucketName, key)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
+
+        amazonS3.deleteObject(new DeleteObjectRequest(bucketName, key));
 
         user.setProfilePicUrl(null);
         userRepository.save(user);
     }
+
 }
