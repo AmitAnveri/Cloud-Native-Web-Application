@@ -132,6 +132,14 @@ public class UserService {
 
         logger.info("Uploading profile picture for user with email: {}", userEmail);
 
+        // Check file content type
+        String contentType = file.getContentType();
+        if (contentType == null ||
+                (!contentType.equals("image/png") && !contentType.equals("image/jpeg") && !contentType.equals("image/jpg"))) {
+            logger.warn("Invalid file type: {}", contentType);
+            return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).build();
+        }
+
         String fileName = file.getOriginalFilename();
         String key = "profile-pictures/" + user.getId() + "/" + fileName;
         String uniqueId = UUID.randomUUID().toString();
