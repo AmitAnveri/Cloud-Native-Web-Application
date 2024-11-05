@@ -141,7 +141,7 @@ public class UserController {
         return userService.getProfilePic(userEmail);
     }
 
-    @PostMapping(value = "/pic", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/self/pic", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ProfilePicResponseDto> addOrUpdateProfilePic(@RequestParam("profilePic") MultipartFile profilePic) throws IOException {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String userEmail = userDetails.getUsername();
@@ -151,7 +151,7 @@ public class UserController {
         return userService.uploadProfilePic(userEmail, profilePic);
     }
 
-    @DeleteMapping("/pic")
+    @DeleteMapping("/self/pic")
     public ResponseEntity<?> deleteProfilePic() {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String userEmail = userDetails.getUsername();
@@ -160,4 +160,15 @@ public class UserController {
 
         return userService.deleteProfilePic(userEmail);
     }
+
+    @RequestMapping(value = "/self/pic", method = RequestMethod.OPTIONS)
+    public ResponseEntity<?> handleOptionsUserPicSelf() {
+        return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
+    }
+
+    @RequestMapping(value = "/self/pic", method = RequestMethod.HEAD)
+    public ResponseEntity<?> handleHeadUserPicSelf() {
+        return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
+    }
+
 }
