@@ -29,7 +29,7 @@ jobs:
       - name: Build JAR
         run: gradle build
       - name: Upload JAR Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: webapp-jar
           path: build/libs/webapp-0.0.1-SNAPSHOT.jar
@@ -41,7 +41,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
       - name: Download JAR Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: webapp-jar
       - name: List files after downloading artifact
