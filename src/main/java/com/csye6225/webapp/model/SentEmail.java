@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
-@Table(schema = "email_tracking", name = "sent_emails")
+@Table(name = "sent_emails")
 public class SentEmail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
