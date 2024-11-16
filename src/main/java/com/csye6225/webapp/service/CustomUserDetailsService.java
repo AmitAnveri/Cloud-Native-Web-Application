@@ -37,6 +37,9 @@ public class CustomUserDetailsService implements UserDetailsService {
             if (user == null) {
                 throw new UsernameNotFoundException("Invalid Email or password");
             }
+            if (!user.getEmailVerified()) {
+                throw new UsernameNotFoundException("Email is not verified");
+            }
             return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
         } catch (DataAccessResourceFailureException e) {
             throw new DatabaseAuthenticationException("Database is currently unavailable", e);
