@@ -34,6 +34,9 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime accountUpdated;
 
+    @Column(nullable = false)
+    private Boolean emailVerified = false;
+
     @Column(name = "profile_pic_url")
     private String profilePicUrl;
 
@@ -95,5 +98,13 @@ public class User {
 
     public void setProfilePicUrl(String profilePicUrl) {
         this.profilePicUrl = profilePicUrl;
+    }
+
+    public Boolean getEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(Boolean emailVerified) {
+        this.emailVerified = emailVerified;
     }
 }
