@@ -20,6 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.services.sns.SnsClient;
+import software.amazon.awssdk.services.sns.model.PublishRequest;
+import software.amazon.awssdk.services.sns.model.PublishResponse;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -69,6 +72,20 @@ public class UserService {
         long durationSave = System.currentTimeMillis() - startSave;
         statsDClient.recordExecutionTime("db.userRepository.save.time", durationSave);
         logger.info("User with email {} created successfully", userRequestDto.getEmail());
+
+        // Publish to SNS Topic
+        try (SnsClient snsClient = SnsClient.create()) {
+            logger.info("Publishing message to SNS topic for user verification");
+            PublishRequest publishRequest = PublishRequest.builder()
+                    .topicArn(System.getenv("SNS_TOPIC_ARN"))
+                    .message("{\"email\": \"" + userRequestDto.getEmail() + "\"}")
+                    .build();
+            PublishResponse response = snsClient.publish(publishRequest);
+            logger.info("SNS message published successfully. Message ID: {}", response.messageId());
+        } catch (Exception e) {
+            logger.error("Failed to publish message to SNS topic: {}", e.getMessage());
+            throw new RuntimeException("Error sending email verification message.");
+        }
 
         return mapToUserResponseDto(user);
     }
