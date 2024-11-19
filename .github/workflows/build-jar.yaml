@@ -6,7 +6,6 @@ on:
       - main
 jobs:
   build:
-    if: github.repository_owner == 'CSYE6225-Amit-Anveri'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -34,7 +33,6 @@ jobs:
           name: webapp-jar
           path: build/libs/webapp-0.0.1-SNAPSHOT.jar
   deploy:
-    if: github.repository_owner == 'CSYE6225-Amit-Anveri'
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -44,18 +42,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: webapp-jar
-      - name: List files after downloading artifact
-        run: ls -R
       - name: Set up AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-      - name: Set instance type
-        run: echo "INSTANCE_TYPE=${{ env.INSTANCE_TYPE }}" >> $GITHUB_ENV
-      - name: Print Environment Variables
-        run: printenv
       - name: Install Packer
         run: >
           curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
@@ -83,3 +75,53 @@ jobs:
         run: >
           aws ec2 modify-image-attribute --image-id ${{ env.AMI_ID }} \
                                          --launch-permission "{\"Add\":[{\"UserId\":\"${{ secrets.TARGET_ACCOUNT_ID }}\"}]}"
+      - name: Set up AWS Credentials for Target Account
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Create New Launch Template Version
+        id: launch-template
+        run: |
+          LAUNCH_TEMPLATE_NAME=${{ secrets.LAUNCH_TEMPLATE_NAME }}
+          AMI_ID=${{ env.AMI_ID }}
+          LAUNCH_TEMPLATE_VERSION=$(aws ec2 create-launch-template-version \
+            --launch-template-name "$LAUNCH_TEMPLATE_NAME" \
+            --source-version "$Latest" \
+            --launch-template-data "{\"ImageId\":\"$AMI_ID\"}" \
+            --query 'LaunchTemplateVersion.LaunchTemplateVersionNumber' \
+            --output text)
+          echo "LAUNCH_TEMPLATE_VERSION=$LAUNCH_TEMPLATE_VERSION" >> $GITHUB_ENV
+      - name: Update Auto Scaling Group
+        run: >
+          aws autoscaling update-auto-scaling-group \
+            --auto-scaling-group-name "${{ secrets.ASG_NAME }}" \
+            --launch-template "LaunchTemplateName=${{ secrets.LAUNCH_TEMPLATE_NAME }},Version=$LAUNCH_TEMPLATE_VERSION"
+      - name: Start Instance Refresh
+        id: instance-refresh
+        run: >
+          INSTANCE_REFRESH_ID=$(aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name "${{ secrets.ASG_NAME }}" \
+            --preferences '{"InstanceWarmup": 300, "MinHealthyPercentage": 50}' \
+            --query 'InstanceRefreshId' --output text)
+          echo "INSTANCE_REFRESH_ID=$INSTANCE_REFRESH_ID" >> $GITHUB_ENV
+      - name: Wait for Instance Refresh to Complete
+        run: >
+          while true; do
+            STATUS=$(aws autoscaling describe-instance-refreshes \
+              --auto-scaling-group-name "${{ secrets.ASG_NAME }}" \
+              --query "InstanceRefreshes[?InstanceRefreshId=='${{ env.INSTANCE_REFRESH_ID }}'].Status" \
+              --output text)
+            echo "Instance Refresh Status: $STATUS"
+            if [ "$STATUS" == "Successful" ]; then
+              echo "Instance refresh completed successfully."
+              break
+            elif [ "$STATUS" == "Failed" ]; then
+              echo "Instance refresh failed."
+              exit 1
+            fi
+            sleep 30
+          done
+      - name: Deployment Completed
+        run: echo "Deployment with AMI ${{ env.AMI_ID }} completed successfully."
