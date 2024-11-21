@@ -89,12 +89,25 @@ jobs:
           LAUNCH_TEMPLATE_NAME=${{ secrets.LAUNCH_TEMPLATE_NAME }}
           AMI_ID=${{ env.AMI_ID }}
           INSTANCE_TYPE=${{ secrets.INSTANCE_TYPE }}
+
+          BASE_TEMPLATE=$(aws ec2 describe-launch-template-versions \
+            --launch-template-name "$LAUNCH_TEMPLATE_NAME" \
+            --versions "\$Latest" \
+            --query 'LaunchTemplateVersions[0].LaunchTemplateData' \
+            --output json)
+          
+          UPDATED_TEMPLATE=$(echo "$BASE_TEMPLATE" | jq \
+            --arg ami "$AMI_ID" \
+            --arg instanceType "$INSTANCE_TYPE" \
+            '.ImageId = $ami | .InstanceType = $instanceType')
+
           LAUNCH_TEMPLATE_VERSION=$(aws ec2 create-launch-template-version \
             --launch-template-name "$LAUNCH_TEMPLATE_NAME" \
-            --source-version "$Latest" \
-            --launch-template-data "{\"ImageId\":\"$AMI_ID\", \"InstanceType\":\"$INSTANCE_TYPE\"}" \
+            --source-version "\$Latest" \
+            --launch-template-data "$UPDATED_TEMPLATE" \
             --query 'LaunchTemplateVersion.VersionNumber' \
             --output text)
+
           echo "LAUNCH_TEMPLATE_VERSION=$LAUNCH_TEMPLATE_VERSION" >> $GITHUB_ENV
       - name: Update Auto Scaling Group
         run: >
