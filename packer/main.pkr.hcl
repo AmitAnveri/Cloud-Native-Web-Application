@@ -43,12 +43,17 @@ source "amazon-ebs" "ubuntu" {
 build {
   sources = ["source.amazon-ebs.ubuntu"]
 
-  # 1. Install Java 17, PostgreSQL
+  # 1. Install Java 17, PostgreSQL, unzip, curl, jq, and AWS CLI
   provisioner "shell" {
     inline = [
       "sudo apt-get update",
       "sudo apt-get upgrade -y",
-      "sudo apt-get install -y openjdk-17-jdk"
+      "sudo apt-get install -y openjdk-17-jdk unzip curl jq",
+
+      # Install AWS CLI v2
+      "curl \"https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip\" -o \"awscliv2.zip\"",
+      "unzip awscliv2.zip",
+      "sudo ./aws/install",
     ]
   }
 
