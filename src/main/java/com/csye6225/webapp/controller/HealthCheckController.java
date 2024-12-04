@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/health")
+@RequestMapping("/healthz")
 public class HealthCheckController {
 
     @Autowired
@@ -24,6 +24,34 @@ public class HealthCheckController {
     @GetMapping
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<Void> healthCheck(HttpServletRequest request) {
+        // Start the timer for this API
+        long start = System.currentTimeMillis();
+
+        statsDClient.incrementCounter("api.healthz.call_count");
+
+        if (request.getContentLength() > 0 || request.getQueryString() != null) {
+            long duration = System.currentTimeMillis() - start;
+            statsDClient.recordExecutionTime("api.healthz.time", duration);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        boolean isDbConnected = healthCheckService.isDatabaseConnected();
+
+        long duration = System.currentTimeMillis() - start;
+        statsDClient.recordExecutionTime("api.healthz.time", duration);
+
+        if (isDbConnected) {
+            return ResponseEntity.ok().header("Cache-Control", "no-cache").build();
+        } else {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .header("Cache-Control", "no-cache")
+                    .build();
+        }
+    }
+
+    @GetMapping
+    @RequestMapping(method = RequestMethod.GET, path = "/test")
+    public ResponseEntity<Void> healthCheckTest(HttpServletRequest request) {
         // Start the timer for this API
         long start = System.currentTimeMillis();
 
