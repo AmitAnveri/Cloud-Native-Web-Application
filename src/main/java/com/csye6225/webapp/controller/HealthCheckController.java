@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/healthz")
+@RequestMapping("/health")
 public class HealthCheckController {
 
     @Autowired
