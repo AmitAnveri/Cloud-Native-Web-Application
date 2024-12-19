@@ -6,7 +6,6 @@ on:
       - main
 jobs:
   build:
-    if: github.repository_owner == 'CSYE6225-Amit-Anveri'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -34,7 +33,6 @@ jobs:
           name: webapp-jar
           path: build/libs/webapp-0.0.1-SNAPSHOT.jar
   deploy:
-    if: github.repository_owner == 'CSYE6225-Amit-Anveri'
     needs: build
     runs-on: ubuntu-latest
     steps:

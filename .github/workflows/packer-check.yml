@@ -6,7 +6,6 @@ on:
       - main
 jobs:
   validate:
-    if: github.repository_owner == 'CSYE6225-Amit-Anveri'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
