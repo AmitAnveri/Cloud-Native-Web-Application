@@ -1,73 +1,170 @@
+# Web Application README
 
-# WebApp Spring Boot Application
+## Project Overview
 
-This is a Spring Boot web application that connects to a PostgreSQL database. The application uses environment variables to configure database credentials and URL.
+This project is a backend-only web application designed to manage users, their profile pictures, and related operations. The application follows modern cloud-native and security best practices, leveraging AWS services, Spring Boot, and a modular infrastructure-as-code setup for scalable and secure deployments. Key features include RESTful APIs for user management, file storage on S3, and extensive observability through metrics and logs.
 
-## Prerequisites
+## Architecture Diagram
 
-Install the following on your machine:
+![Architecture Diagram](assets/arch.jpg)
 
-- Java 17
-- PostgreSQL
-- Git
+## Features
 
-## Build and Deploy Instructions (Local)
+### Core Functionalities
 
-Follow these steps to build and run the application locally.
+1. **User Management**:
 
-### Step 1: Clone the Repository
+    - Create, update, and retrieve user accounts.
+    - Secure password storage using BCrypt.
+    - Validation and error handling for clean data input.
 
-### Step 2: Set Up Environment Variables
+2. **Profile Picture Management**:
 
-Set the following environment variables:
+    - Upload profile pictures to AWS S3.
+    - Delete profile pictures from both S3 and the database.
+    - Support for common image formats like PNG, JPG, and JPEG.
 
-| Variable       | Description                                                                                                |
-|----------------|------------------------------------------------------------------------------------------------------------|
-| `DB_URL`       | The JDBC URL for the PostgreSQL database (e.g., `jdbc:postgresql://localhost:portnumber/yourdatabasename`) |
-| `DB_USERNAME`  | The username for the PostgreSQL database (e.g., `yourusername`)                                            |
-| `DB_PASSWORD`  | The password for the PostgreSQL database (e.g., `yourpassword`)                                            |
+3. **Authentication and Authorization**:
 
-#### Env Variables setup instructions MacOS/Linux
+    - Authentication using Spring Security with Basic Authentication.
+    - Role-based access control to restrict operations to authorized users.
 
-1. Open your terminal and add the following lines to your shell configuration file (e.g., `~/.bash_profile`, `~/.zshrc`):
+4. **Health Monitoring**:
 
-```bash
-export DB_URL=jdbc:postgresql://localhost:5432/postgres
-export DB_USERNAME=postgres
-export DB_PASSWORD=yourpassword
-```
+    - A health check endpoint (`/healthz`) to verify database connectivity and application status.
 
-2. After editing, reload the configuration with:
+### Observability
 
-```bash
-source ~/.zshrc
-```
+- **Metrics**:
+    - API-level metrics: Call counts and execution times for endpoints.
+    - Database-level metrics: Query execution times.
+    - StatsD integration for real-time performance monitoring.
+- **Logging**:
+    - Consistent error and info logs for debugging and analysis.
 
-3. Confirm that the environment variables are set by running:
-It should display the values of the env variables
+### AWS Integration
 
-```bash
-echo $DB_URL $DB_USERNAME $DB_PASSWORD
-```
+- **S3 for File Storage**:
+    - Secure, scalable storage for user profile pictures.
+- **IAM Role-Based Access**:
+    - EC2 instances are configured with IAM roles for secure S3 access.
+- **CloudWatch**:
+    - Custom metrics and logs forwarded to AWS CloudWatch.
 
-### Step 3: Run the Application
+### CI/CD Pipeline
 
-To start the Spring Boot application, use your preferred IDE and open the project on the webapp folder and run WebappApplication Java file
+- Automated testing, building, and deployment with GitHub Actions.
+- Packer and Terraform integration for AMI creation and infrastructure provisioning.
+- Dynamic instance refresh and scaling using AWS Auto Scaling Groups.
 
+## API Endpoints
 
-The application should now be running on `http://localhost:8080`.
+### Public Endpoints
 
-### API's:
+1. **POST /v1/user**:
 
-You can verify that the application is running and properly connected to the database by accessing the `/healthz` endpoint.
+    - Create a new user.
 
-1. Open a terminal and run the following command to test the health check API:
+2. **GET /healthz**:
 
-```bash
-curl http://localhost:8080/healthz
-```
+    - Health check endpoint to verify database connectivity.
 
-The response should be:
-- **200 OK** if the database connection is successful.
-- **503 Service Unavailable** if the database connection fails.
-- **400 Bad Request** if the request method is not supported like PUT,POST,etc.
+### Secured Endpoints (Authentication Required)
+
+1. **GET /v1/user/self**:
+
+    - Retrieve details of the authenticated user.
+
+2. **PUT /v1/user/self**:
+
+    - Update details of the authenticated user.
+
+3. **POST /v1/user/self/pic**:
+
+    - Upload a profile picture for the authenticated user.
+
+4. **DELETE /v1/user/self/pic**:
+
+    - Delete the authenticated user’s profile picture.
+
+## Infrastructure
+
+### Cloud Architecture
+
+1. **VPC and Networking**:
+
+    - Custom VPC with public and private subnets across multiple Availability Zones.
+    - Internet Gateway for public access.
+
+2. **Compute**:
+
+    - EC2 instances deployed in an Auto Scaling Group with a Launch Template.
+    - Instances configured with encrypted EBS volumes using custom KMS keys.
+
+3. **Database**:
+
+    - PostgreSQL RDS instance hosted in private subnets.
+    - Encrypted with KMS keys and credentials managed via AWS Secrets Manager.
+
+4. **File Storage**:
+
+    - S3 bucket with server-side encryption (SSE-S3) and access restricted via IAM policies.
+
+### Security
+
+- **Encryption**:
+    - All sensitive data encrypted at rest using KMS keys.
+    - HTTPS recommended for secure data transmission.
+- **IAM Roles and Policies**:
+    - Principle of least privilege applied to all roles.
+    - Secure access to AWS services for EC2 and Lambda.
+- **Secrets Management**:
+    - Database credentials and API keys managed securely with AWS Secrets Manager.
+
+## Deployment
+
+1. **Setup**:
+
+    - Use Terraform to provision infrastructure.
+    - Use Packer to create AMIs for application deployment.
+
+2. **CI/CD Workflow**:
+
+    - Build and test application with GitHub Actions.
+    - Automate deployment pipeline for infrastructure and application updates.
+
+## Observability and Monitoring
+
+- **Metrics**:
+    - Real-time application metrics collected with StatsD and visualized in CloudWatch.
+- **Logs**:
+    - Application logs sent to CloudWatch for monitoring and debugging.
+
+## Best Practices Followed
+
+1. **Secure Design**:
+
+    - Password hashing with BCrypt.
+    - Least privilege access for AWS resources.
+
+2. **Scalable Architecture**:
+
+    - Auto Scaling Groups for EC2 instances.
+    - S3 for highly available and scalable file storage.
+
+3. **Modular Codebase**:
+
+    - Clean separation of concerns with service and controller layers.
+
+4. **Infrastructure as Code**:
+
+    - Fully automated and reproducible infrastructure setup with Terraform.
+
+## Related Repositories
+
+- **Infrastructure Code**: [tf-aws-infra](https://github.com/AmitAnveri/tf-aws-infra)
+- **Serverless Code**: [serverless](https://github.com/AmitAnveri/serverless)
+
+## Conclusion
+
+This backend application is production-ready with robust security, scalability, and monitoring features.
