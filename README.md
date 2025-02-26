@@ -1,4 +1,4 @@
-# Web Application README
+# Web Application
 
 ## Project Overview
 
